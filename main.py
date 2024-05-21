@@ -48,7 +48,7 @@ def extract_transmembrane_sequences(df):
             transmembrane_sequences = []
         except Exception as e:
             problematic_indices.append(index)
-        # print(f"Error processing row {index}: {e}")
+            print(f"Error processing row {index}: {e}")
         # Drop problematic rows
     df = df.drop(problematic_indices)
     df = df.assign(Transmembrane_sequences=transmembrane_sequences_superlist)
@@ -71,29 +71,51 @@ def separate_testing_data(df):
 
 
 def calc_p(training_df, amino_acid):
-    total_training_sequence = []
+    total_training_sequence = ''
     for index, row in training_df.iterrows():
-        total_training_sequence.append(row['Sequence'])
+        total_training_sequence += (row['Sequence'])
 
-    total_num_of_specified_amino_acid = re.findall(amino_acid, total_training_sequence)
-    print(len(total_num_of_specified_amino_acid))
-    print(len(total_training_sequence))
+    total_occurrence_of_specified_amino_acid = re.findall(amino_acid, total_training_sequence)
+
+    p = len(total_occurrence_of_specified_amino_acid) / len(total_training_sequence)
+    return p
 
 
 def calc_q(training_df, amino_acid):
-    total_transmembrane_amino_acid_sequence = []
+    total_transmembrane_amino_acid_sequence = ''
 
-    for index, row in training_df.itterrows():
-        total_transmembrane_amino_acid_sequence.append(transmembrane_sequence for transmembrane_sequence in row['Transmembrane_sequences'])
-    total_num_of_specified_transmembrane_amino_acid_occurrence = re.findall(amino_acid, total_transmembrane_amino_acid_sequence)
-    print(len(total_num_of_specified_transmembrane_amino_acid_occurrence))
-    print(len(total_transmembrane_amino_acid_sequence))
+    for index, row in training_df.iterrows():
+        for transmembrane_sequence in row['Transmembrane_sequences']:
+            total_transmembrane_amino_acid_sequence += transmembrane_sequence
+    total_occurrence_of_specified_transmembrane_amino_acid_occurrence = re.findall(amino_acid, total_transmembrane_amino_acid_sequence)
 
-def calc_s(q,p):
-    s = math.log(q/p)
+    q = len(total_occurrence_of_specified_transmembrane_amino_acid_occurrence) / len(total_transmembrane_amino_acid_sequence)
+    return q
+
+
+def calc_s(q, p):
+    s = math.log(q / p)
     return s
-for amino_
-type = "helical"
+
+
+def create_dictionary_with_s_values_for_all_amino_acids(amino_acids_list, df):
+    """
+    Jones DT, Taylor WR, Thornton JM.
+    A model recognition approach to the prediction of all-helical membrane protein structure and topology.
+    Biochemistry. 1994 Mar 15;33(10):3038-49. doi: 10.1021/bi00176a037. PMID: 8130217.
+    page - 2
+    """
+    amino_acid_s_value_dict = {}
+    for amino_acid in amino_acids_list:
+        pi = calc_p(df, amino_acid)
+        qi = calc_q(df, amino_acid)
+        si = calc_s(qi, pi)
+        amino_acid_s_value_dict[amino_acid] = si
+
+    return amino_acid_s_value_dict
+
+
+type = "beta"
 amino_acids_list = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 
 download_transmembrane_protein_data(type)
