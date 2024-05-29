@@ -87,9 +87,11 @@ def calc_q(training_df, amino_acid):
     for index, row in training_df.iterrows():
         for transmembrane_sequence in row['Transmembrane_sequences']:
             total_transmembrane_amino_acid_sequence += transmembrane_sequence
-    total_occurrence_of_specified_transmembrane_amino_acid_occurrence = re.findall(amino_acid, total_transmembrane_amino_acid_sequence)
+    total_occurrence_of_specified_transmembrane_amino_acid_occurrence = re.findall(amino_acid,
+                                                                                   total_transmembrane_amino_acid_sequence)
 
-    q = len(total_occurrence_of_specified_transmembrane_amino_acid_occurrence) / len(total_transmembrane_amino_acid_sequence)
+    q = len(total_occurrence_of_specified_transmembrane_amino_acid_occurrence) / len(
+        total_transmembrane_amino_acid_sequence)
     return q
 
 
@@ -115,11 +117,57 @@ def create_dictionary_with_s_values_for_all_amino_acids(amino_acids_list, df):
     return amino_acid_s_value_dict
 
 
-type = "beta"
+def evaluate_answer(predicted_range, ground_truth_range):
+    """
+    Wikipedia contributors. (2024, April 26).
+    Jaccard index. In Wikipedia, The Free Encyclopedia.
+    Retrieved 09:49, May 29, 2024,
+    from https://en.wikipedia.org/w/index.php?title=Jaccard_index&oldid=1220812875
+    """
+
+    # Calculate intersection
+    intersection_start = max(ground_truth_range[0], predicted_range[0])
+    intersection_end = min(ground_truth_range[1], predicted_range[1])
+    intersection_length = max(0, intersection_end - intersection_start)
+
+    # Calculate union
+    union_start = min(ground_truth_range[0], predicted_range[0])
+    union_end = max(ground_truth_range[1], predicted_range[1])
+    union_length = union_end - union_start
+
+    # Calculate IoU
+    if union_length == 0:  # To avoid division by zero
+        return 0.0
+    iou = intersection_length / union_length
+
+    # Convert IoU to percentage
+    percentage_similarity = iou * 100
+    return percentage_similarity
+
+def predict_transmembrane_range(sequence, s_values, window_size):
+    averaged_sequence = []
+    if len(sequence) <= window_size:
+        print("errm, what the sigma? ಠಿ_ಠ")
+        return -1
+    for i in range (len(sequence) - window_size):
+        middle_amino_acid = int(window_size/2)+ i
+        sum_of_s = 
+
+type = "helical"
+window_size = 7
 amino_acids_list = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 
 download_transmembrane_protein_data(type)
 transmembrane_protein_df = read_data_into_dataframe(f"transmembrane_{type}.xlsx")
-training_dataframe, testing_dataframe = separate_testing_data(extract_transmembrane_sequences(transmembrane_protein_df))
-calc_p(training_dataframe, 'A')
-calc_q(training_dataframe, 'A')
+
+if not os.path.exists('training_dataframe.csv') and not os.path.exists('testing_dataframe.csv'):
+    print("Didn't find saved dataframes, so im gonna create em ")
+    training_dataframe, testing_dataframe = separate_testing_data(
+        extract_transmembrane_sequences(transmembrane_protein_df))
+
+training_dataframe = pd.read_csv('training_dataframe.csv')
+testing_dataframe = pd.read_csv('testing_dataframe.csv')
+
+for i in range(5):
+    print(i)
+#s_values = create_dictionary_with_s_values_for_all_amino_acids(amino_acids_list, testing_dataframe)
