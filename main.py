@@ -41,8 +41,9 @@ def extract_transmembrane_sequences(df):
             sequence = row['Sequence']
             matches = re.findall(r"TRANSMEM\s(\d+)..(\d+)", row['Transmembrane'])
             transmembrane_indexes = [(int(start), int(end)) for start, end in matches]
-            for index in transmembrane_indexes:
-                transmembrane_sequence = (sequence[index[0] - 1:index[1]])
+            for t_index in transmembrane_indexes:
+                transmembrane_sequence = (sequence[t_index[0] - 1:t_index[1] - 1])
+                print(len(transmembrane_sequence))
                 transmembrane_sequences.append(transmembrane_sequence)
             transmembrane_sequences_superlist.append(transmembrane_sequences)
             transmembrane_sequences = []
@@ -165,14 +166,12 @@ def evaluate_answer(predicted_range, ground_truth_range):
     print(averaged_sequence)"""
 
 
-def predict_transmembrane_range(sequence, s_values, start_window_size):
+"""def predict_transmembrane_range(sequence, s_values, start_window_size):
     window_size = start_window_size
     big_sums = {}
     sequence = list(sequence)
-    print(sequence)
     s_val_to_seq = (pd.Series(sequence)).map(s_values)
     list_of_seq_to_s_val = list(s_val_to_seq)
-    print(list_of_seq_to_s_val)
     if len(sequence) <= window_size:
         print("errm, what the sigma? ಠಿ_ಠ")
         return -1
@@ -183,17 +182,68 @@ def predict_transmembrane_range(sequence, s_values, start_window_size):
             end_amino_acid = middle_amino_acid + int(window_size / 2)
 
             sum_of_s = sum(list_of_seq_to_s_val[start_amino_acid:end_amino_acid + 1])
-            amino_acid_range = f"{start_amino_acid}-{end_amino_acid}"
+            amino_acid_range = (int(start_amino_acid), int(end_amino_acid))
             big_sums[amino_acid_range] = sum_of_s
         window_size -= 1
     big_sums_sorted = dict(sorted(big_sums.items(), key=lambda item: item[1], reverse=True))
-    print(big_sums_sorted)
+    print(big_sums_sorted)"""
+
+"""def predict_and_check_best_result(df, start_window_size, s_values):
+    for index, row in df.iterrows():
+        sequence = row['Sequence']
+        matches = re.findall(r"TRANSMEM\s(\d+)..(\d+)", row['Transmembrane'])
+        transmembrane_indexes = [(int(start), int(end)) for start, end in matches]
+        prediction = predict_transmembrane_range(sequence, s_values, start_window_size)"""
 
 
+def filter_overlapping_ranges(big_sums_sorted):
+    selected_ranges = []
+    for current_range, current_value in big_sums_sorted.items():
+        overlap = False
+        for selected_range in selected_ranges:
+            if ranges_overlap(current_range, selected_range):
+                overlap = True
+                break
+        if not overlap:
+            selected_ranges.append(current_range)
+    return selected_ranges
+
+
+def ranges_overlap(range1, range2):
+    return not (range1[1] < range2[0] or range1[0] > range2[1])
+
+
+def predict_transmembrane_range(sequence, s_values, start_window_size):
+    window_size = start_window_size
+    big_sums = {}
+    sequence = list(sequence)
+    s_val_to_seq = (pd.Series(sequence)).map(s_values)
+    list_of_seq_to_s_val = list(s_val_to_seq)
+    if len(sequence) <= window_size:
+        print("errm, what the sigma? ಠಿ_ಠ")
+        return -1
+    while window_size > 17:
+        for i in range(len(sequence) - window_size):
+            middle_amino_acid = int(window_size / 2) + i
+            start_amino_acid = middle_amino_acid - int(window_size / 2)
+            end_amino_acid = middle_amino_acid + int(window_size / 2)
+
+            sum_of_s = sum(list_of_seq_to_s_val[start_amino_acid:end_amino_acid + 1])
+            amino_acid_range = (int(start_amino_acid), int(end_amino_acid))
+            big_sums[amino_acid_range] = sum_of_s
+        window_size -= 1
+    big_sums_sorted = dict(sorted(big_sums.items(), key=lambda item: item[1], reverse=True))
+
+    filtered_ranges = filter_overlapping_ranges(big_sums_sorted)
+    for item in filtered_ranges:
+        print(f"{item}: {big_sums_sorted[item]}")
+    return filtered_ranges
+
+
+# Example usage
 type = "helical"
-window_size = 100
+window_size = 40
 amino_acids_list = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
-
 download_transmembrane_protein_data(type)
 transmembrane_protein_df = read_data_into_dataframe(f"transmembrane_{type}.xlsx")
 
@@ -205,8 +255,7 @@ if not os.path.exists('training_dataframe.csv') and not os.path.exists('testing_
 training_dataframe = pd.read_csv('training_dataframe.csv')
 testing_dataframe = pd.read_csv('testing_dataframe.csv')
 
-s_values = create_dictionary_with_s_values_for_all_amino_acids(amino_acids_list, testing_dataframe)
+s_values = create_dictionary_with_s_values_for_all_amino_acids(amino_acids_list, training_dataframe)
 print(s_values)
-predict_transmembrane_range(testing_dataframe['Sequence'].iloc[1], s_values, window_size)
-print(testing_dataframe['Entry'].iloc[1])
-print(testing_dataframe)
+print(training_dataframe['Entry'].iloc[30560], training_dataframe['Sequence'].iloc[30560])
+predict_transmembrane_range(training_dataframe['Sequence'].iloc[30560], s_values, window_size)
