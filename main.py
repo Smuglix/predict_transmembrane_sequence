@@ -165,7 +165,6 @@ def evaluate_answer(predicted_range, ground_truth_range):
         averaged_sequence[middle_amino_acid] = sum_of_s/window_size
     print(averaged_sequence)"""
 
-
 """def predict_transmembrane_range(sequence, s_values, start_window_size):
     window_size = start_window_size
     big_sums = {}
@@ -198,7 +197,7 @@ def evaluate_answer(predicted_range, ground_truth_range):
 
 def filter_overlapping_ranges(big_sums_sorted):
     selected_ranges = []
-    for current_range, current_value in big_sums_sorted.items():
+    for current_range in big_sums_sorted.keys():
         overlap = False
         for selected_range in selected_ranges:
             if ranges_overlap(current_range, selected_range):
@@ -216,12 +215,15 @@ def ranges_overlap(range1, range2):
 def predict_transmembrane_range(sequence, s_values, start_window_size):
     window_size = start_window_size
     big_sums = {}
+    filtered_ranges = {}
     sequence = list(sequence)
     s_val_to_seq = (pd.Series(sequence)).map(s_values)
     list_of_seq_to_s_val = list(s_val_to_seq)
+
     if len(sequence) <= window_size:
         print("errm, what the sigma? ಠಿ_ಠ")
-        return -1
+        window_size = len(sequence)
+
     while window_size > 17:
         for i in range(len(sequence) - window_size):
             middle_amino_acid = int(window_size / 2) + i
@@ -231,18 +233,51 @@ def predict_transmembrane_range(sequence, s_values, start_window_size):
             sum_of_s = sum(list_of_seq_to_s_val[start_amino_acid:end_amino_acid + 1])
             amino_acid_range = (int(start_amino_acid), int(end_amino_acid))
             big_sums[amino_acid_range] = sum_of_s
+
         window_size -= 1
+
     big_sums_sorted = dict(sorted(big_sums.items(), key=lambda item: item[1], reverse=True))
 
-    filtered_ranges = filter_overlapping_ranges(big_sums_sorted)
-    for item in filtered_ranges:
-        print(f"{item}: {big_sums_sorted[item]}")
+    selected_ranges = filter_overlapping_ranges(big_sums_sorted)
+    for selected_range in selected_ranges:
+        filtered_ranges[selected_range] = big_sums_sorted[selected_range]
+
     return filtered_ranges
 
 
-# Example usage
+def get_transmembrane_range_from_row(row):
+    matches = re.findall(r"TRANSMEM\s(\d+)..(\d+)", row['Transmembrane'])
+    transmembrane_indexes = [(int(start), int(end)) for start, end in matches]
+    return transmembrane_indexes
+
+
+def mario_steals_your_best_liver(df, s_values, start_window_size):
+    sum_perc = 0
+    for index, row in df.iterrows():
+        percentage_similarities = []
+        print(index)
+        sequence = row['Sequence']
+        prediction = predict_transmembrane_range(sequence, s_values, start_window_size)
+        ground_truth_ranges = get_transmembrane_range_from_row(row)
+
+        try:
+            max_prediction = max(prediction.items(), key=lambda x: x[1])
+            for transmembrane_range in ground_truth_ranges:
+                similarity_percentage = evaluate_answer(max_prediction[0], transmembrane_range)
+                percentage_similarities.append(similarity_percentage)
+            largest_perc = max(percentage_similarities)
+            print(f"{max_prediction[1]}: {largest_perc}")
+            sum_perc += largest_perc
+        except ValueError as e:
+            print(f"Skipping index {index} due to error: {e}")
+
+    average_perc = sum_perc / (index + 1)
+    print(f"YOUR AVERAGE COOLNESS IS: {average_perc}")
+
+
 type = "helical"
 window_size = 40
+
 amino_acids_list = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 download_transmembrane_protein_data(type)
 transmembrane_protein_df = read_data_into_dataframe(f"transmembrane_{type}.xlsx")
@@ -256,6 +291,4 @@ training_dataframe = pd.read_csv('training_dataframe.csv')
 testing_dataframe = pd.read_csv('testing_dataframe.csv')
 
 s_values = create_dictionary_with_s_values_for_all_amino_acids(amino_acids_list, training_dataframe)
-print(s_values)
-print(training_dataframe['Entry'].iloc[30560], training_dataframe['Sequence'].iloc[30560])
-predict_transmembrane_range(training_dataframe['Sequence'].iloc[30560], s_values, window_size)
+mario_steals_your_best_liver(testing_dataframe, s_values, window_size)
