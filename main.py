@@ -243,8 +243,7 @@ print("Ilgyatt adamskibidi")
 def average_sequence(list_of_seq_to_s_val, averaging_window_size):
     averaged_sequence = list_of_seq_to_s_val
     if len(list_of_seq_to_s_val) <= averaging_window_size:
-        print("errm, what the sigma? ಠಿ_ಠ")
-        return -1
+        averaging_window_size = 1
     for i in range(len(list_of_seq_to_s_val) - averaging_window_size):
         middle_amino_acid = int(averaging_window_size / 2) + i
         start_amino_acid = middle_amino_acid - int(averaging_window_size / 2)
@@ -324,8 +323,11 @@ def mario_steals_your_best_liver(df, s_values, start_window_size, end_window_siz
 
 
 def mario_steals_all_your_bitches(df, s_values, start_window_size, end_window_size, averaging_window_size, prediction_score_minimum):
-    sum_perc = 0
-    transmembrane_evaluated = 0
+    sum_perc_num = 0
+    total_transmembrane_evaluated = 0
+    current_transmembrane_evaluated = 0
+    missed_transmembrane_regions_count = 0
+
     for index, row in df.iterrows():
         percentage_similarities = []
         print(index)
@@ -339,26 +341,36 @@ def mario_steals_all_your_bitches(df, s_values, start_window_size, end_window_si
                 largest_perc = 0
                 if transmembrane_prediction_score < prediction_score_minimum:
                     continue
-                transmembrane_evaluated += 1
+                current_transmembrane_evaluated += 1
+                total_transmembrane_evaluated += 1
                 for transmembrane_range in ground_truth_ranges:
                     similarity_percentage = evaluate_answer(transmembrane_prediction_range, transmembrane_range)
                     percentage_similarities.append(similarity_percentage)
+
                 largest_perc = max(percentage_similarities)
                 percentage_similarities = []
                 print(f"{transmembrane_prediction_score}: {largest_perc}")
-                sum_perc += largest_perc
+                sum_perc_num += largest_perc
+            missed_transmembrane_regions_count += len(ground_truth_ranges) - current_transmembrane_evaluated
+
+            current_transmembrane_evaluated = 0
+
         except ValueError as e:
             print(f"Skipping index {index} due to error: {e}")
+    average_with_missed_regions = sum_perc_num / (missed_transmembrane_regions_count + total_transmembrane_evaluated)
+    print(f"sum_perc_num{sum_perc_num}")
+    print(f"evaluated {total_transmembrane_evaluated} transmembrane regions, missed {missed_transmembrane_regions_count} regions")
+    average_perc = sum_perc_num / (total_transmembrane_evaluated + 1)
+    print(f"YOUR AVERAGE best accuracy IS: {average_perc} %")
+    print(f"YOUR AVERAGE chance that predicted transmembrane region is on spot with what should be is: {average_with_missed_regions}%")
 
-    average_perc = sum_perc / (transmembrane_evaluated + 1)
-    print(f"YOUR AVERAGE cock size IS: {average_perc} milimeters")
 
 
 type = "helical"
-window_size = 40
-end_window_size = 19
-averaging_window_size = 7
-prediction_score_minimum = 0
+window_size = 25
+end_window_size = 20
+averaging_window_size = 1
+prediction_score_minimum = -2
 
 amino_acids_list = ['A', 'R', 'N', 'D', 'C', 'Q', 'E', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V']
 download_transmembrane_protein_data(type)
