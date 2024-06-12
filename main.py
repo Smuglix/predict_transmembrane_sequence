@@ -1,4 +1,4 @@
-# memebrained: Ilya Adamskiy and Tal Or
+# rottenbrained: Ilgyatt Adamskibidi and Tal Orizzler
 
 import csv
 import math
@@ -10,7 +10,8 @@ import re
 
 
 def download_transmembrane_protein_data(type):
-    url = f"https://rest.uniprot.org/uniprotkb/stream?fields=accession%2Csequence%2Cft_transmem&format=xlsx&query=%28%28ft_transmem%3A{type}%29%29+AND+%28reviewed%3Atrue%29"
+    #url = f"https://rest.uniprot.org/uniprotkb/stream?fields=accession%2Csequence%2Cft_transmem&format=xlsx&query=%28%28ft_transmem%3A{type}%29%29+AND+%28reviewed%3Atrue%29"\
+    url = f"https://rest.uniprot.org/uniprotkb/stream?fields=accession%2Cid%2Csequence%2Cft_transmem&format=xlsx&query=((ft_transmem%3A{type}))+AND+(reviewed%3Atrue)"
     file_path = f"transmembrane_{type}.xlsx"
     if os.path.exists(file_path):
         print("File already exists, skipping download.")
@@ -169,55 +170,6 @@ def evaluate_answer(predicted_range, ground_truth_range):
     # Convert IoU to percentage
     percentage_similarity = iou * 100
     return percentage_similarity
-
-
-"""def predict_transmembrane_range(sequence, s_values, window_size):
-    sequence = list(sequence)
-    print(sequence)
-    s_val_to_seq = (pd.Series(sequence)).map(s_values)
-    list_of_seq_to_s_val = list(s_val_to_seq)
-    print(list_of_seq_to_s_val)
-    averaged_sequence = list_of_seq_to_s_val
-    if len(sequence) <= window_size:
-        print("errm, what the sigma? ಠಿ_ಠ")
-        return -1
-    for i in range(len(sequence) - window_size):
-        middle_amino_acid = int(window_size / 2) + i
-        start_amino_acid = middle_amino_acid - int(window_size / 2)
-        end_amino_acid = middle_amino_acid + int(window_size / 2)
-
-        sum_of_s = sum(list_of_seq_to_s_val[start_amino_acid:end_amino_acid+1])
-        averaged_sequence[middle_amino_acid] = sum_of_s/window_size
-    print(averaged_sequence)"""
-
-"""def predict_transmembrane_range(sequence, s_values, start_window_size):
-    window_size = start_window_size
-    big_sums = {}
-    sequence = list(sequence)
-    s_val_to_seq = (pd.Series(sequence)).map(s_values)
-    list_of_seq_to_s_val = list(s_val_to_seq)
-    if len(sequence) <= window_size:
-        print("errm, what the sigma? ಠಿ_ಠ")
-        return -1
-    while window_size > 2:
-        for i in range(len(sequence) - window_size):
-            middle_amino_acid = int(window_size / 2) + i
-            start_amino_acid = middle_amino_acid - int(window_size / 2)
-            end_amino_acid = middle_amino_acid + int(window_size / 2)
-
-            sum_of_s = sum(list_of_seq_to_s_val[start_amino_acid:end_amino_acid + 1])
-            amino_acid_range = (int(start_amino_acid), int(end_amino_acid))
-            big_sums[amino_acid_range] = sum_of_s
-        window_size -= 1
-    big_sums_sorted = dict(sorted(big_sums.items(), key=lambda item: item[1], reverse=True))
-    print(big_sums_sorted)"""
-
-"""def predict_and_check_best_result(df, start_window_size, s_values):
-    for index, row in df.iterrows():
-        sequence = row['Sequence']
-        matches = re.findall(r"TRANSMEM\s(\d+)..(\d+)", row['Transmembrane'])
-        transmembrane_indexes = [(int(start), int(end)) for start, end in matches]
-        prediction = predict_transmembrane_range(sequence, s_values, start_window_size)"""
 
 
 def filter_overlapping_ranges(big_sums_sorted):

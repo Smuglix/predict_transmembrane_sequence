@@ -1,0 +1,22 @@
+# Ignore specific files
+animation.py
+ANN.ipynb
+multithreaded_main.py
+s_values.csv
+test_main_2.py
+test_main.py
+testing_dataframe.csv
+training_dataframe.csv
+transmembrane_helical.xlsx
+transmembrane_beta.xlsx
+
+__pycache__/animation.cpython-311.pyc
+__pycache__/main.cpython-311.pyc
+__pycache__/multithreaded_main.cpython-311.pyc
+
+
+# Ignore directories
+/filtered_ranges/
+/media/
+
+
