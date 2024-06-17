@@ -30,3 +30,6 @@
 >mfw
 ```
 ![1716212741891916s](https://github.com/Smuglix/predict_transmembrane_sequence/assets/102866132/2c91c36f-9e13-4305-97e3-b2c8c9b64cd7)
+
+
+You can access files of our run that was described in the paper [here](https://1drv.ms/f/s!AjWi-bhiyXdAhrA5QiM8RPqnHXjMRw?e=ylnMNQ)
